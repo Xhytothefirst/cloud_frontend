@@ -109,7 +109,10 @@ const buildLineConfig = (
   xyPaddingBottom: 18,
   xyPaddingLeft: 32,
   tooltipFontSize: 11,
-  formatter: ({ value }) => (Number.isInteger(value) ? String(value) : ''),
+  formatter: ({ value }) => {
+    const num = Number(value) || 0
+    return Number.isInteger(num) ? String(num) : num.toFixed(2)
+  },
 })
 
 const trendConfigs = computed(() => {
@@ -134,6 +137,7 @@ const metrics = computed(() => [
     title: '库存总成本',
     numeric: Number(summary.value?.totalPurchasePrice ?? 0),
     prefix: '¥',
+    precision: 2,
     hint: '按入库成本计算',
   },
   {
@@ -146,6 +150,7 @@ const metrics = computed(() => [
     title: '今日利润',
     numeric: Number(todayTrend.value?.totalProfit ?? 0),
     prefix: '¥',
+    precision: 2,
     hint: '已售订单（含累计至今日）',
   },
 ])
@@ -292,7 +297,7 @@ watch(activeTrend, (value) => {
           :style="{ height: '100%' }"
         >
           <div>{{ item.title }}</div>
-          <el-statistic :value="item.numeric" :prefix="item.prefix" :value-style="{ fontSize: '22px' }" />
+          <el-statistic :value="item.numeric" :prefix="item.prefix" :precision="item.precision" :value-style="{ fontSize: '22px' }" />
           <el-text type="success" size="small">{{ item.hint }}</el-text>
         </el-card>
       </el-col>
