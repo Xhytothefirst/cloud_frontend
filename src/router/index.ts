@@ -1,6 +1,13 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { getToken } from '../utils/token'
 
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('../views/Login.vue'),
+    meta: { layout: 'plain' },
+  },
   {
     path: '/',
     name: 'dashboard',
@@ -31,6 +38,17 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to) => {
+  const loggedIn = !!getToken()
+  if (to.path === '/login') {
+    return loggedIn ? { path: '/' } : true
+  }
+  if (!loggedIn) {
+    return { path: '/login' }
+  }
+  return true
 })
 
 export default router

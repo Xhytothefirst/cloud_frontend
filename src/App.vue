@@ -1,13 +1,32 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { logout } from './api/auth'
+import { clearToken } from './utils/token'
 
 const route = useRoute()
+const router = useRouter()
 const activeMenu = computed(() => route.path)
+const isPlainLayout = computed(() => route.meta.layout === 'plain')
+
+const onLogout = async () => {
+  try {
+    await logout()
+  } catch (err) {
+    ElMessage.error((err as Error).message)
+  } finally {
+    clearToken()
+    ElMessage.success('已退出登录')
+    router.replace('/login')
+  }
+}
 </script>
 
 <template>
-  <el-container :style="{ height: '100vh' }">
+  <router-view v-if="isPlainLayout" />
+
+  <el-container v-else :style="{ height: '100vh' }">
     <el-header
       :height="'48px'"
       :style="{
@@ -21,7 +40,14 @@ const activeMenu = computed(() => route.path)
       <div :style="{ fontSize: '20px', fontWeight: 700, letterSpacing: '2px', color: '#303133' }">
         STOCK
       </div>
-      <el-avatar :size="32" />
+      <el-dropdown @command="onLogout">
+        <el-avatar :size="32" />
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </el-header>
 
     <el-container :style="{ flex: '1', minHeight: '0' }">

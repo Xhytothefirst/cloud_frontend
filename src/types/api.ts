@@ -99,3 +99,9 @@ export interface BrandVO {
 export interface BrandRequest {
   name: string
 }
+
+export interface LoginRequest {
+  username: string
+  password: string
+  rememberMe: boolean
+}
