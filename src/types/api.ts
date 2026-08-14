@@ -105,3 +105,55 @@ export interface LoginRequest {
   password: string
   rememberMe: boolean
 }
+
+export interface PasswordUpdateRequest {
+  captcha: string
+  newPassword: string
+}
+
+export interface EmailUpdateRequest {
+  captcha: string
+  newEmail: string
+}
+
+export interface PermissionVO {
+  id: number
+  code: string
+  name: string
+}
+
+export interface RoleVO {
+  id: number | null
+  name: string | null
+  description: string | null
+  userCount: number | null
+  permissions: PermissionVO[] | null
+  createTime: string | null
+  updateTime: string | null
+}
+
+export interface RoleRequest {
+  name: string
+  description?: string | null
+  permissionIds: number[]
+}
+
+export interface AccountVO {
+  id: number | null
+  username: string | null
+  fullName: string | null
+  email: string | null
+  enabled: boolean | null
+  roles: RoleVO[] | null
+  createTime: string | null
+  updateTime: string | null
+}
+
+export interface AccountRequest {
+  username: string
+  fullName: string
+  password: string | null
+  email?: string | null
+  enabled: boolean
+  roleIds: number[]
+}

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox, type AutocompleteInstance, type FormInstance, type FormRules } from 'element-plus'
 import { useRoute } from 'vue-router'
 import {
   batchDeleteProducts,
   deleteProduct,
   getProduct,
+  queryProductsByCode,
   saleProduct,
   saveProduct,
   searchProducts,
@@ -51,10 +52,41 @@ const costMax = ref<number | null | undefined>(undefined)
 const dateRange = ref<[string, string] | []>([])
 const searchTimer = ref<number | null>(null)
 
+// 货号相似商品查询（仅新增模式）
+const codeSuggestTimer = ref<number | null>(null)
+
+// el-autocomplete 的 fetch-suggestions 回调，带 1 秒防抖
+const querySimilarCode = (queryString: string, cb: (results: ProductVO[]) => void) => {
+  // 编辑模式或空值不查询，避免覆盖正在编辑的数据
+  if (dialogMode.value !== 'create' || !queryString.trim()) {
+    cb([])
+    return
+  }
+  if (codeSuggestTimer.value) {
+    window.clearTimeout(codeSuggestTimer.value)
+  }
+  codeSuggestTimer.value = window.setTimeout(() => {
+    queryProductsByCode(queryString.trim())
+      .then((list) => cb(list ?? []))
+      .catch(() => cb([]))
+  }, 1000)
+}
+
+// 选中某条相似商品 → 自动填写名称和品牌
+const onSimilarCodeSelect = (item: Record<string, any>) => {
+  const product = item as ProductVO
+  form.name = product.name ?? ''
+  if (product.brandId) {
+    form.brandId = product.brandId
+  }
+  formRef.value?.clearValidate(['name', 'brandId'])
+}
+
 const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
 const editingId = ref<number | null>(null)
 const formRef = ref<FormInstance | null>(null)
+const codeAutoRef = ref<AutocompleteInstance | null>(null)
 const form = reactive<ProductRequest>({
   code: '',
   name: '',
@@ -76,6 +108,17 @@ const rules: FormRules = {
 }
 
 const resetForm = () => {
+  // 清除上一次货号查询的定时器，避免弹窗打开后又触发查询
+  if (codeSuggestTimer.value) {
+    window.clearTimeout(codeSuggestTimer.value)
+    codeSuggestTimer.value = null
+  }
+  // 关闭并清空货号联想建议，避免残留上一次的搜索记录
+  const auto = codeAutoRef.value
+  if (auto) {
+    auto.activated = false
+    auto.suggestions = []
+  }
   form.code = ''
   form.name = ''
   form.purchasePrice = 0
@@ -617,7 +660,23 @@ onMounted(async () => {
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="货号" prop="code">
-          <el-input v-model="form.code" placeholder="如 DD1391-100" />
+          <el-autocomplete
+            ref="codeAutoRef"
+            v-model="form.code"
+            :fetch-suggestions="querySimilarCode"
+            :trigger-on-focus="false"
+            :debounce="0"
+            placeholder="如 DD1391-100"
+            style="width: 100%"
+            @select="onSimilarCodeSelect"
+          >
+            <template #default="{ item }">
+              <div style="line-height: 1.4">
+                <div>{{ item.code }}</div>
+                <div style="font-size: 12px; color: #909399">{{ item.name }} · {{ item.brandName }}</div>
+              </div>
+            </template>
+          </el-autocomplete>
         </el-form-item>
         <el-form-item label="鞋款名称" prop="name">
           <el-input v-model="form.name" placeholder="如 Air Jordan 1 Low 白灰" />

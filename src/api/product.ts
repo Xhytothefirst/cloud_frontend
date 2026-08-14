@@ -35,3 +35,6 @@ export const deleteProduct = (id: number): Promise<void> =>
 
 export const batchDeleteProducts = (ids: number[]): Promise<void> =>
   http.post<void, void>('/product/batch-delete', ids)
+
+export const queryProductsByCode = (code: string): Promise<ProductVO[]> =>
+  http.get<ProductVO[], ProductVO[]>('/product/query-by-code', { params: { code } })

@@ -68,6 +68,15 @@ const onLogout = async () => {
           <el-menu-item index="/settings">
             <template #title>系统设置</template>
           </el-menu-item>
+          <el-sub-menu index="permission">
+            <template #title>权限管理</template>
+            <el-menu-item index="/role">
+              <template #title>角色管理</template>
+            </el-menu-item>
+            <el-menu-item index="/account">
+              <template #title>账号管理</template>
+            </el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </el-aside>
 
